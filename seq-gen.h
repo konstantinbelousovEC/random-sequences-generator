@@ -8,6 +8,12 @@
 
 namespace gen {
 
+    template<typename Container>
+    using value_type = typename Container::value_type;
+
+    template<typename Container>
+    using size_type = typename Container::size_type;
+
     class RandomSeqGen {
     private:
         std::random_device rd_;
@@ -16,11 +22,11 @@ namespace gen {
     public:
         RandomSeqGen(): rd_(), gen_(rd_()) {};
 
-        template <template<typename...> class Container, typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
-        Container<T> gen_arithmetic_container(typename Container<T>::size_type size, T min_value, T max_value);
+        template<typename Container, typename = std::enable_if_t<std::is_arithmetic_v<value_type<Container>>>>
+        Container gen_arithmetic_container(size_type<Container> size, value_type<Container> min_value, value_type<Container> max_value);
 
-        template <template<typename...> class Container, typename T>
-        Container<T> gen_arithmetic_container(typename Container<T>::size_type size);
+        template<typename Container>
+        Container gen_arithmetic_container(typename Container::size_type size);
 
     private:
         template <typename T>
@@ -31,28 +37,27 @@ namespace gen {
     // RandomSeqGen definitions
     // ----------------------------------------------------------------------------------------------------------------
 
-    template <template<typename...> class Container, typename T, typename>
-    Container<T> RandomSeqGen::gen_arithmetic_container(typename Container<T>::size_type size, T min_value, T max_value) {
-        Container<T> container;
+    template<typename Container, typename>
+    Container RandomSeqGen::gen_arithmetic_container(size_type<Container> size, value_type<Container> min_value, value_type<Container> max_value) {
+        Container container;
 
-        if constexpr (has_reserve_method<Container<T>>()) container.reserve(size);
+        if constexpr (has_reserve_method<Container>()) container.reserve(size);
 
         for (size_t i = 0; i < size; ++i) {
-            if constexpr (has_push_back_method<Container<T>>()) {
-                container.push_back(gen_random_arithmetic_value<T>(gen_, min_value, max_value));
-            } else if constexpr (has_insert_method<Container<T>>()) {
-                container.insert(gen_random_arithmetic_value<T>(gen_, min_value, max_value));
-            } else if constexpr (has_push_front_method<Container<T>>()) {
-                container.push_front(gen_random_arithmetic_value<T>(gen_, min_value, max_value));
+            if constexpr (has_push_back_method<Container>()) {
+                container.push_back(gen_random_arithmetic_value(gen_, min_value, max_value));
+            } else if constexpr (has_insert_method<Container>()) {
+                container.insert(gen_random_arithmetic_value(gen_, min_value, max_value));
+            } else if constexpr (has_push_front_method<Container>()) {
+                container.push_front(gen_random_arithmetic_value(gen_, min_value, max_value));
             }
         }
         return container;
-
     }
 
-    template <template<typename...> class Container, typename T>
-    Container<T> RandomSeqGen::gen_arithmetic_container(typename Container<T>::size_type size) {
-        return gen_arithmetic_container<Container, T>(size, std::numeric_limits<T>::min(), std::numeric_limits<T>::max());
+    template <typename Container>
+    Container RandomSeqGen::gen_arithmetic_container(size_type<Container> size) {
+        return gen_arithmetic_container<Container>(size, std::numeric_limits<value_type<Container>>::min(), std::numeric_limits<value_type<Container>>::max());
     }
 
     template <typename T>
@@ -70,14 +75,6 @@ namespace gen {
     [[maybe_unused]] bool RandomSeqGen::gen_random_arithmetic_value(std::mt19937& gen, bool min_value, bool max_value) = delete;
 
 }   // namespace gen --------------------------------------------------------------------------------------------------
-
-template<typename Iterator>
-void print(Iterator start, Iterator finish, std::ostream& out) {
-    for (auto curr_iter = start; curr_iter != finish; ++curr_iter) {
-        out << *curr_iter << " ";
-    }
-    out << std::endl;
-}
 
 // template <>
 //    std::basic_string<char> RandomSeqGen::gen_arithmetic_container(typename std::basic_string<char>::size_type size, char min_value, char max_value) {
