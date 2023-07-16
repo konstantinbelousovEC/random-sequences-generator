@@ -8,6 +8,16 @@
 
 namespace gen {
 
+    namespace ch_col {
+        using namespace std::string_view_literals;
+
+        constexpr std::string_view DIGITS = "0123456789"sv;
+        constexpr std::string_view UPPER_CASE_CH = "ABCDEFGHIGKLMNOPQRSTUVWXYZ"sv;
+        constexpr std::string_view LOWER_CASE_CH = "abcdefghigkmlnopqrstuvwxyz"sv;
+        constexpr std::string_view MIXED_CASES_CH = "ABCDEFGHIGKLMNOPQRSTUVWXYZabcdefghigkmlnopqrstuvwxyz"sv;
+        constexpr std::string_view MIXED_CHARS_N_DIGITS = "ABCDEFGHIGKLMNOPQRSTUVWXYZabcdefghigkmlnopqrstuvwxyz0123456789"sv;
+    }
+
     template<typename Container>
     using value_type = typename Container::value_type;
 
@@ -19,6 +29,9 @@ namespace gen {
 
     template<typename AsctContainer>
     using mapped_type = typename AsctContainer::mapped_type;
+
+    using str_sz = typename std::string::size_type;
+    using strv_sz = typename std::string_view::size_type;
 
     class RandomSeqGen {
     private:
@@ -43,18 +56,30 @@ namespace gen {
             if constexpr (has_reserve_method<AsctContainer>()) container.reserve(size);
 
             for (size_type<AsctContainer> i = 0; i < size; ++i) {
-                auto res = container.try_emplace(gen_random_arithmetic_value(gen_, min_key, max_key), gen_random_arithmetic_value(gen_, min_value, max_value));
+                auto res = container.try_emplace(gen_random_arithmetic_value(min_key, max_key), gen_random_arithmetic_value(min_value, max_value));
                 while (!res.second) {
-                    res = container.try_emplace(gen_random_arithmetic_value(gen_, min_key, max_key), gen_random_arithmetic_value(gen_, min_value, max_value));
+                    res = container.try_emplace(gen_random_arithmetic_value(min_key, max_key), gen_random_arithmetic_value(min_value, max_value));
                 }
             }
 
             return container;
         }
 
-    private:
+        std::string gen_random_string(str_sz size, std::string_view char_collection = ch_col::LOWER_CASE_CH) {
+            std::string rand_str;
+            rand_str.reserve(size);
+
+            std::uniform_int_distribution<strv_sz> distribution(0, char_collection.size() - 1);
+
+            for (int i = 0; i < size; ++i) {
+                rand_str += char_collection[distribution(gen_)];
+            }
+
+            return rand_str;
+        }
+
         template <typename T>
-        T gen_random_arithmetic_value(std::mt19937& gen, T min_value, T max_value);
+        T gen_random_arithmetic_value(T min_value, T max_value);
 
     };
 
@@ -68,11 +93,11 @@ namespace gen {
 
         for (size_t i = 0; i < size; ++i) {
             if constexpr (has_push_back_method<Container>()) {
-                container.push_back(gen_random_arithmetic_value(gen_, min_value, max_value));
+                container.push_back(gen_random_arithmetic_value(min_value, max_value));
             } else if constexpr (has_insert_method<Container>()) {
-                container.insert(gen_random_arithmetic_value(gen_, min_value, max_value));
+                container.insert(gen_random_arithmetic_value(min_value, max_value));
             } else if constexpr (has_push_front_method<Container>()) {
-                container.push_front(gen_random_arithmetic_value(gen_, min_value, max_value));
+                container.push_front(gen_random_arithmetic_value(min_value, max_value));
             }
         }
 
@@ -85,18 +110,18 @@ namespace gen {
     }
 
     template <typename T>
-    T RandomSeqGen::gen_random_arithmetic_value(std::mt19937& gen, T min_value, T max_value) {
+    T RandomSeqGen::gen_random_arithmetic_value(T min_value, T max_value) {
         if constexpr (std::is_integral<T>::value) {
             std::uniform_int_distribution<T> dis(min_value, max_value);
-            return dis(gen);
+            return dis(gen_);
         } else {
             std::uniform_real_distribution<T> dis(min_value, max_value);
-            return dis(gen);
+            return dis(gen_);
         }
     }
 
     template <>
-    [[maybe_unused]] bool RandomSeqGen::gen_random_arithmetic_value(std::mt19937& gen, bool min_value, bool max_value) = delete;
+    [[maybe_unused]] bool RandomSeqGen::gen_random_arithmetic_value(bool min_value, bool max_value) = delete;
 
 }   // namespace gen --------------------------------------------------------------------------------------------------
 
