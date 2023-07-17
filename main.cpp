@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "seq-gen.h"
+#include "generator.h"
 
 template<typename Iterator>
 void print(Iterator start, Iterator finish, std::ostream& out) {
@@ -29,6 +29,8 @@ void print(T size) {
 }
 
 int main() {
+
+#if 0
 
     gen::RandomSeqGen generator;
 
@@ -92,6 +94,27 @@ int main() {
 
     auto random_str = generator.gen_random_string(6);
     std::cout << random_str << std::endl;
+
+    // ----------------------------------------------------------------------------------------------------------------
+
+#endif
+    gen::Generator generator;
+    auto v = generator.generate<std::vector<std::string>>(10, gen::StringValueGenerator{5, 5, "ade234"});
+    print(v.begin(), v.end(), std::cout);
+#if 1
+
+
+
+#endif
+
+    // auto container = generator.generate<std::vector<int>>(size, min, max, value_generator);
+    // auto container = generator.generate<std::vector<std::string>>(size, min, max, value_generator);
+    // auto container = generator.generate<std::vector<UserType>>(size, min, max, value_generator);
+    // auto container = generator.generate<std::vector<std::vector<int>>>(size, min, max, value_generator); ???
+
+    // 1. api контейнера
+    // 2. определенный генератор для value_type (встроенный или пользовательский). Встроенный генератор определен параметром по умолчанию
+
 
     // ----------------------------------------------------------------------------------------------------------------
 
