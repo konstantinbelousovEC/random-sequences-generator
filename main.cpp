@@ -99,8 +99,8 @@ int main() {
 
 #endif
     gen::Generator generator;
-    auto v = generator.generate<std::vector<std::string>>(10, gen::StringValueGenerator{5, 5, "ade234"});
-    print(v.begin(), v.end(), std::cout);
+    auto v = generator.generate<std::unordered_map<int, int>>(3, {0, 5}, {100,300});
+
 #if 1
 
 

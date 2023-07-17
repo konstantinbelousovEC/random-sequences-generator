@@ -10,6 +10,8 @@ namespace gen {
     template<typename T> using enable_if_arithmetic = std::enable_if_t<std::is_arithmetic_v<T>, T>;
     template<typename T> using enable_if_std_string = std::enable_if_t<is_std_string_v<T>, T>;
     template<typename T> using enable_if_std_seq_container = std::enable_if_t<is_std_seq_container_v<T>, T>;
+    template<typename T> using enable_if_std_actv_val_container = std::enable_if_t<is_std_associative_val_only_container_v<T>, T>;
+    template<typename T> using enable_if_std_actv_key_val_container = std::enable_if_t<is_std_associative_key_val_container_v<T>, T>;
 
     template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
     struct ArithmeticValueGenerator {
@@ -76,10 +78,18 @@ namespace gen {
     public:
         Generator();
 
-        //  = std::function<value_type<SequenceContainer>(NumGenerator, value_type<SequenceContainer>, value_type<SequenceContainer>)>
         template<typename SequenceContainer, typename ValueGenerator = ArithmeticValueGenerator<value_type<SequenceContainer>>>
         enable_if_std_seq_container<SequenceContainer> generate(size_type<SequenceContainer> size,
                                                                 ValueGenerator val_gen = ArithmeticValueGenerator<value_type<SequenceContainer>>{});
+
+        template<typename SequenceContainer, typename ValueGenerator = ArithmeticValueGenerator<value_type<SequenceContainer>>>
+        enable_if_std_actv_val_container<SequenceContainer> generate(size_type<SequenceContainer> size,
+                                                                     ValueGenerator val_gen = ArithmeticValueGenerator<value_type<SequenceContainer>>{});
+
+        template<typename SequenceContainer, typename KeyGenerator = ArithmeticValueGenerator<key_type<SequenceContainer>>, typename ValueGenerator = ArithmeticValueGenerator<mapped_type<SequenceContainer>>>
+        enable_if_std_actv_key_val_container<SequenceContainer> generate(size_type<SequenceContainer> size,
+                                                                         KeyGenerator key_gen = ArithmeticValueGenerator<value_type<SequenceContainer>>{},
+                                                                         ValueGenerator val_gen = ArithmeticValueGenerator<value_type<SequenceContainer>>{});
 
     }; // Generator
 
@@ -97,6 +107,46 @@ namespace gen {
                 container.push_back(val_gen(gen_));
             } else if constexpr (has_push_front_method<SequenceContainer>()) {
                 container.push_front(val_gen(gen_));
+            }
+        }
+
+        return container;
+    }
+
+    template<typename SequenceContainer, typename ValueGenerator>
+    enable_if_std_actv_val_container<SequenceContainer> Generator::generate(size_type<SequenceContainer> size,
+                                                                            ValueGenerator val_gen)
+    {
+        // the size of container must be more or equal to all possible unique values in range [val_gen.min, val_gen.max]
+        // if this condition is false - UB or infinite cycle may happen
+        // todo: add check for this condition - it will throw an exception then
+
+        SequenceContainer container;
+
+        for (size_type<SequenceContainer> i = 0; i < size; ++i) {
+            auto insert_info = container.insert(val_gen(gen_));
+            while (!insert_info.second) {
+                insert_info = container.insert(val_gen(gen_));
+            }
+        }
+
+        return container;
+    }
+
+    template<typename SequenceContainer, typename KeyGenerator, typename ValueGenerator>
+    enable_if_std_actv_key_val_container<SequenceContainer>
+    Generator::generate(size_type<SequenceContainer> size, KeyGenerator key_gen, ValueGenerator val_gen)
+    {
+        // the size of container must be more or equal to all possible unique values in range [val_gen.min, val_gen.max]
+        // if this condition is false - UB or infinite cycle may happen
+        // todo: add check for this condition - it will throw an exception then
+
+        SequenceContainer container;
+
+        for (size_type<SequenceContainer> i = 0; i < size; ++i) {
+            auto insert_info = container.insert({key_gen(gen_), val_gen(gen_)});
+            while (!insert_info.second) {
+                insert_info = container.insert({key_gen(gen_), val_gen(gen_)});
             }
         }
 

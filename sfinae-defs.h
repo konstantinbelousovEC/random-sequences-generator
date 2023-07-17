@@ -5,6 +5,10 @@
 #include <deque>
 #include <list>
 #include <forward_list>
+#include <unordered_map>
+#include <unordered_set>
+#include <map>
+#include <set>
 
 template <typename Container>
 constexpr auto test_push_back(typename Container::value_type) -> decltype(std::declval<Container>().push_back(std::declval<typename Container::value_type>()), std::true_type{});
@@ -131,3 +135,31 @@ struct is_std_seq_container<std::forward_list<T>> : std::true_type {};
 
 template <typename T>
 constexpr bool is_std_seq_container_v = is_std_seq_container<T>::value;
+
+// --------------------------------------------------------------------------------------------------------------------
+
+template <typename T>
+struct is_std_associative_val_only_container : std::false_type {};
+
+template <typename T>
+struct is_std_associative_val_only_container<std::set<T>> : std::true_type {};
+
+template <typename T>
+struct is_std_associative_val_only_container<std::unordered_set<T>> : std::true_type {};
+
+template <typename T>
+constexpr bool is_std_associative_val_only_container_v = is_std_associative_val_only_container<T>::value;
+
+// --------------------------------------------------------------------------------------------------------------------
+
+template <typename T>
+struct is_std_associative_key_val_container : std::false_type {};
+
+template <typename T, typename U>
+struct is_std_associative_key_val_container<std::map<T, U>> : std::true_type {};
+
+template <typename T, typename U>
+struct is_std_associative_key_val_container<std::unordered_map<T, U>> : std::true_type {};
+
+template <typename T>
+constexpr bool is_std_associative_key_val_container_v = is_std_associative_key_val_container<T>::value;
