@@ -18,6 +18,47 @@ void print_pair(Iterator start, Iterator finish, std::ostream& out) {
     out << std::endl;
 }
 
+class X {
+private:
+    int x_{};
+    int x_2_{};
+    double y_{};
+    std::string str_;
+
+public:
+    void print() {
+        std::cout << "|" << x_ << " : " << x_2_ << " : " << y_ << " : " << str_ << "|" << " ";
+    }
+
+    X() = default;
+    X(int x, double y, std::string str) : x_(x), x_2_(x_ * 2), y_(y), str_(std::move(str)) {}
+};
+
+namespace gen {
+
+    struct XValueGenerator {
+    public:
+        int min_x_;
+        int max_x_;
+        double min_y_;
+        double max_y_;
+        std::string::size_type min_sz_str_;
+        std::string::size_type max_sz_str_;
+        std::string ch_col_;
+
+        template<typename BitGen>
+        X operator() (BitGen& gen) {
+            gen::ArithmeticValueGenerator x_gen{min_x_, max_x_};
+            gen::ArithmeticValueGenerator y_gen{min_y_, max_y_};
+            gen::StringValueGenerator str_gen{min_sz_str_, max_sz_str_, ch_col_};
+
+            return X(x_gen(gen), y_gen(gen), str_gen(gen));
+        }
+
+    };
+
+}
+
 int main() {
 
     gen::Generator generator;
@@ -67,6 +108,16 @@ int main() {
     auto rand_m_2 = generator.generate<std::map<std::string, std::string>>(5, str_gen_3, str_gen_4);
     print_pair(rand_m_2.begin(), rand_m_2.end(), std::cout);
 
+    // -----------------------------------------------------------------------------------------------------------------
+
+    gen::XValueGenerator x_gen{10, 15, 3.0, 5.0, 3, 3, "a1b2c3"};
+    auto rand_v_3 = generator.generate<std::vector<X>>(5, x_gen);
+    for (auto&& elem : rand_v_3) {
+        elem.print();
+    }
+    std::cout << std::endl;
+
+    // -----------------------------------------------------------------------------------------------------------------
 
     return 0;
 }
