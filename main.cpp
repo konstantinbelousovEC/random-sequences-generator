@@ -1,4 +1,5 @@
 #include <iostream>
+#include <utility>
 
 #include "generator.h"
 
@@ -36,23 +37,22 @@ public:
 
 namespace gen {
 
+    template<typename T, typename U>
     struct XValueGenerator {
+    private:
+        gen::ArithmeticValueGenerator<T> x_gen_;
+        gen::ArithmeticValueGenerator<U> y_gen_;
+        gen::StringValueGenerator str_gen_;
+
     public:
-        int min_x_;
-        int max_x_;
-        double min_y_;
-        double max_y_;
-        std::string::size_type min_sz_str_;
-        std::string::size_type max_sz_str_;
-        std::string ch_col_;
+        XValueGenerator(gen::ArithmeticValueGenerator<T> x_gen,
+                        gen::ArithmeticValueGenerator<U> y_gen,
+                        gen::StringValueGenerator str_gen)
+        : x_gen_(x_gen), y_gen_(y_gen), str_gen_(std::move(str_gen)) {}
 
         template<typename BitGen>
         X operator() (BitGen& gen) {
-            gen::ArithmeticValueGenerator x_gen{min_x_, max_x_};
-            gen::ArithmeticValueGenerator y_gen{min_y_, max_y_};
-            gen::StringValueGenerator str_gen{min_sz_str_, max_sz_str_, ch_col_};
-
-            return X(x_gen(gen), y_gen(gen), str_gen(gen));
+            return X(x_gen_(gen), y_gen_(gen), str_gen_(gen));
         }
 
     };
@@ -110,8 +110,11 @@ int main() {
 
     // -----------------------------------------------------------------------------------------------------------------
 
-    gen::XValueGenerator x_gen{10, 15, 3.0, 5.0, 3, 3, "a1b2c3"};
-    auto rand_v_3 = generator.generate<std::vector<X>>(5, x_gen);
+    gen::ArithmeticValueGenerator x_gen{10, 15};
+    gen::ArithmeticValueGenerator y_gen{3.0, 5.0};
+    gen::StringValueGenerator str_gen{3, 3, "a1b2c3"};
+    gen::XValueGenerator xv_gen{x_gen, y_gen, str_gen};
+    auto rand_v_3 = generator.generate<std::vector<X>>(5, xv_gen);
     for (auto&& elem : rand_v_3) {
         elem.print();
     }

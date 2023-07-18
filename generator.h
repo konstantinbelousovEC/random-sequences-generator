@@ -145,6 +145,7 @@ namespace gen {
     struct StringValueGenerator {
     private:
         using str_sz = std::string::size_type;
+
     private:
         str_sz min_sz_;
         str_sz max_sz_;
