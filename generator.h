@@ -2,16 +2,124 @@
 
 #include <random>
 #include <functional>
+#include <type_traits>
 
-#include "sfinae-defs.h"
+#include <vector>
+#include <deque>
+#include <list>
+#include <forward_list>
+#include <unordered_map>
+#include <unordered_set>
+#include <map>
+#include <set>
 
 namespace gen {
 
-    template<typename T> using enable_if_arithmetic = std::enable_if_t<std::is_arithmetic_v<T>, T>;
-    template<typename T> using enable_if_std_string = std::enable_if_t<is_std_string_v<T>, T>;
-    template<typename T> using enable_if_std_seq_container = std::enable_if_t<is_std_seq_container_v<T>, T>;
-    template<typename T> using enable_if_std_actv_val_container = std::enable_if_t<is_std_associative_val_only_container_v<T>, T>;
-    template<typename T> using enable_if_std_actv_key_val_container = std::enable_if_t<is_std_associative_key_val_container_v<T>, T>;
+    namespace sfinae {
+
+        template <typename Container>
+        constexpr auto test_push_back(typename Container::value_type) -> decltype(std::declval<Container>().push_back(std::declval<typename Container::value_type>()), std::true_type{});
+
+        template <typename Container>
+        constexpr auto test_push_back(...) -> std::false_type;
+
+        template <typename Container>
+        constexpr bool has_push_back_method() {
+            return decltype(test_push_back<Container>(typename Container::value_type{}))::value;
+        }
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+        template <typename Container>
+        constexpr auto test_push_front(typename Container::value_type) -> decltype(std::declval<Container>().push_front(std::declval<typename Container::value_type>()), std::true_type{});
+
+        template <typename Container>
+        constexpr auto test_push_front(...) -> std::false_type;
+
+        template <typename Container>
+        constexpr bool has_push_front_method() {
+            return decltype(test_push_front<Container>(typename Container::value_type{}))::value;
+        }
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+        template <typename Container>
+        constexpr auto test_insert(typename Container::value_type) -> decltype(std::declval<Container>().insert(std::declval<typename Container::value_type>()), std::true_type{});
+
+        template <typename Container>
+        constexpr auto test_insert(...) -> std::false_type;
+
+        template <typename Container>
+        constexpr bool has_insert_method() {
+            return decltype(test_insert<Container>(typename Container::value_type{}))::value;
+        }
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+        template <typename Container>
+        constexpr auto test_reserve(typename Container::size_type) -> decltype(std::declval<Container>().reserve(std::declval<typename Container::size_type>()), std::true_type{});
+
+        template <typename Container>
+        constexpr auto test_reserve(...) -> std::false_type;
+
+        template <typename Container>
+        constexpr bool has_reserve_method() {
+            return decltype(test_reserve<Container>(typename Container::size_type{}))::value;
+        }
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+        template <typename T>
+        struct is_std_seq_container : std::false_type {};
+
+        template <typename T>
+        struct is_std_seq_container<std::vector<T>> : std::true_type {};
+
+        template <typename T>
+        struct is_std_seq_container<std::deque<T>> : std::true_type {};
+
+        template <typename T>
+        struct is_std_seq_container<std::list<T>> : std::true_type {};
+
+        template <typename T>
+        struct is_std_seq_container<std::forward_list<T>> : std::true_type {};
+
+        template <typename T>
+        constexpr bool is_std_seq_container_v = is_std_seq_container<T>::value;
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+        template <typename T>
+        struct is_std_associative_val_only_container : std::false_type {};
+
+        template <typename T>
+        struct is_std_associative_val_only_container<std::set<T>> : std::true_type {};
+
+        template <typename T>
+        struct is_std_associative_val_only_container<std::unordered_set<T>> : std::true_type {};
+
+        template <typename T>
+        constexpr bool is_std_associative_val_only_container_v = is_std_associative_val_only_container<T>::value;
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+        template <typename T>
+        struct is_std_associative_key_val_container : std::false_type {};
+
+        template <typename T, typename U>
+        struct is_std_associative_key_val_container<std::map<T, U>> : std::true_type {};
+
+        template <typename T, typename U>
+        struct is_std_associative_key_val_container<std::unordered_map<T, U>> : std::true_type {};
+
+        template <typename T>
+        constexpr bool is_std_associative_key_val_container_v = is_std_associative_key_val_container<T>::value;
+
+    } // namespace sfinae
+
+    template<typename T> using enable_if_std_seq_container = std::enable_if_t<sfinae::is_std_seq_container_v<T>, T>;
+    template<typename T> using enable_if_std_actv_val_container = std::enable_if_t<sfinae::is_std_associative_val_only_container_v<T>, T>;
+    template<typename T> using enable_if_std_actv_key_val_container = std::enable_if_t<sfinae::is_std_associative_key_val_container_v<T>, T>;
 
     template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
     struct ArithmeticValueGenerator {
@@ -31,6 +139,7 @@ namespace gen {
                 return std::uniform_real_distribution<T> {min_, max_}(gen);
             }
         }
+
     }; // ArithmeticValueGenerator
 
     struct StringValueGenerator {
@@ -43,7 +152,7 @@ namespace gen {
 
     public:
         StringValueGenerator(str_sz min_size, str_sz max_size, std::string char_coll)
-                : min_sz_(min_size), max_sz_(max_size), char_coll_(std::move(char_coll )) {}
+        : min_sz_(min_size), max_sz_(max_size), char_coll_(std::move(char_coll )) {}
 
         template<typename BitGen>
         std::string operator() (BitGen& gen) {
@@ -53,10 +162,10 @@ namespace gen {
             std::string rand_str;
             rand_str.reserve(str_size);
 
-            std::uniform_int_distribution<str_sz> distribution(0, char_coll_.size() - 1);
+            std::uniform_int_distribution<str_sz> dist(0, char_coll_.size() - 1);
 
             for (int i = 0; i < str_size; ++i) {
-                rand_str += char_coll_[distribution(gen)];
+                rand_str += char_coll_[dist(gen)];
             }
 
             return rand_str;
@@ -76,7 +185,7 @@ namespace gen {
         std::mt19937 gen_;
 
     public:
-        Generator();
+        Generator() : rd_(), gen_(rd_()) {}
 
         template<typename SequenceContainer, typename ValueGenerator = ArithmeticValueGenerator<value_type<SequenceContainer>>>
         enable_if_std_seq_container<SequenceContainer> generate(size_type<SequenceContainer> size,
@@ -93,19 +202,17 @@ namespace gen {
 
     }; // Generator
 
-    Generator::Generator() : rd_(), gen_(rd_()) {}
-
     template<typename SequenceContainer, typename ValueGenerator>
     enable_if_std_seq_container<SequenceContainer> Generator::generate(size_type<SequenceContainer> size,
                                                                        ValueGenerator val_gen)
     {
         SequenceContainer container;
-        if constexpr (has_reserve_method<SequenceContainer>()) container.reserve(size);
+        if constexpr (sfinae::has_reserve_method<SequenceContainer>()) container.reserve(size);
 
         for (size_type<SequenceContainer> i = 0; i < size; ++i) {
-            if constexpr (has_push_back_method<SequenceContainer>()) {
+            if constexpr (sfinae::has_push_back_method<SequenceContainer>()) {
                 container.push_back(val_gen(gen_));
-            } else if constexpr (has_push_front_method<SequenceContainer>()) {
+            } else if constexpr (sfinae::has_push_front_method<SequenceContainer>()) {
                 container.push_front(val_gen(gen_));
             }
         }
@@ -153,21 +260,4 @@ namespace gen {
         return container;
     }
 
-} // namespace
-
-/*
-
- sequenced containers:
-    - vector
-    - deque
-    - list
-    - forward_list
- associative containers:
-    key-value
-        - map
-        - unordered_map
-    value
-        - set
-        - unordered_set
-
-*/
+} // namespace gen

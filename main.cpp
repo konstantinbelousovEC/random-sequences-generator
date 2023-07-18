@@ -1,12 +1,4 @@
 #include <iostream>
-#include <vector>
-#include <forward_list>
-#include <list>
-#include <set>
-#include <deque>
-#include <map>
-#include <unordered_map>
-#include <unordered_set>
 
 #include "generator.h"
 
@@ -18,105 +10,63 @@ void print(Iterator start, Iterator finish, std::ostream& out) {
     out << std::endl;
 }
 
-template<typename T, typename U>
-void print(T size, U min, U max) {
-    std::cout << size << " elems from " << min << " to " << max << " | ";
-}
-
-template<typename T>
-void print(T size) {
-    std::cout << size << " elems from min to max | ";
+template<typename Iterator>
+void print_pair(Iterator start, Iterator finish, std::ostream& out) {
+    for (auto curr_iter = start; curr_iter != finish; ++curr_iter) {
+        out << curr_iter->first << " : " << curr_iter->second << " | ";
+    }
+    out << std::endl;
 }
 
 int main() {
 
-#if 0
-
-    gen::RandomSeqGen generator;
-
-    auto random_vector = generator.gen_seq_arithmetic_container<std::vector<int>>(5, -5, 5);
-    print(5, -5, 5); std::cout << "std::vector<int>: ";
-    print(random_vector.begin(), random_vector.end(), std::cout);
-
-    auto random_vector_2 = generator.gen_seq_arithmetic_container<std::vector<long long int>>(3);
-    print(3); std::cout << "std::vector<long long int>: ";
-    print(random_vector_2.begin(), random_vector_2.end(), std::cout);
-
-    auto random_vector_3 = generator.gen_seq_arithmetic_container<std::vector<short>>(7, 0, 1);
-    print(7, 0, 1); std::cout << "std::vector<short>: ";
-    print(random_vector_3.begin(), random_vector_3.end(), std::cout);
-
-    auto random_vector_6 = generator.gen_seq_arithmetic_container<std::vector<double>>(10, -1.0, 1.0);
-    print(10, -1.0, 1.0); std::cout << "std::vector<double>: ";
-    print(random_vector_6.begin(), random_vector_6.end(), std::cout);
-
-    // ----------------------------------------------------------------------------------------------------------------
-
-    auto random_basic_string = generator.gen_seq_arithmetic_container<std::basic_string<char>>(10, 65, 90);
-    print(10, 65, 90); std::cout << "std::basic_string<char>: ";
-    print(random_basic_string.begin(), random_basic_string.end(), std::cout);
-
-    // ----------------------------------------------------------------------------------------------------------------
-
-    auto random_list = generator.gen_seq_arithmetic_container<std::list<int>>(10, 0, 100);
-    print(10, 0, 100); std::cout << "std::list<int>: ";
-    print(random_list.begin(), random_list.end(), std::cout);
-
-    auto random_forward_list = generator.gen_seq_arithmetic_container<std::forward_list<int>>(10, 0, 100);
-    print(10, 0, 100); std::cout << "std::forward_list<int>: ";
-    print(random_forward_list.begin(), random_forward_list.end(), std::cout);
-
-    auto random_deque = generator.gen_seq_arithmetic_container<std::deque<int>>(10, 0, 100);
-    print(10, 0, 100); std::cout << "std::deque<int>: ";
-    print(random_deque.begin(), random_deque.end(), std::cout);
-
-    auto random_set = generator.gen_seq_arithmetic_container<std::set<int>>(10, 0, 100);
-    print(10, 0, 100); std::cout << "std::set<int>: ";
-    print(random_set.begin(), random_set.end(), std::cout);
-
-    auto random_unordered_set = generator.gen_seq_arithmetic_container<std::unordered_set<int>>(10, 0, 100);
-    print(10, 0, 100); std::cout << "std::unordered_set<int>: ";
-    print(random_unordered_set.begin(), random_unordered_set.end(), std::cout);
-
-    // ----------------------------------------------------------------------------------------------------------------
-
-    auto random_map = generator.gen_asct_arithmetic_container<std::map<int, double>>(10, 0, 9, 100.0, 300.0);
-    for (auto [key, value] : random_map) {
-        std::cout << key << ":" << value << std::endl;
-    }
-
-    auto random_unordered_map = generator.gen_asct_arithmetic_container<std::unordered_map<double, char>>(10, 0.0, 10.0, 97, 122);
-    for (auto [key, value] : random_unordered_map) {
-        std::cout << key << ":" << value << std::endl;
-    }
-
-    // ----------------------------------------------------------------------------------------------------------------
-
-    auto random_str = generator.gen_random_string(6);
-    std::cout << random_str << std::endl;
-
-    // ----------------------------------------------------------------------------------------------------------------
-
-#endif
     gen::Generator generator;
-    auto v = generator.generate<std::unordered_map<int, int>>(3, {0, 5}, {100,300});
 
-#if 1
+    // -----------------------------------------------------------------------------------------------------------------
 
+    auto rand_v_1 = generator.generate<std::vector<int>>(10, {10, 24});
+    print(rand_v_1.begin(), rand_v_1.end(), std::cout);
 
+    auto rand_d_1 = generator.generate<std::deque<int>>(10, {25, 39});
+    print(rand_d_1.begin(), rand_d_1.end(), std::cout);
 
-#endif
+    auto rand_l_1 = generator.generate<std::list<int>>(10, {40, 54});
+    print(rand_l_1.begin(), rand_l_1.end(), std::cout);
 
-    // auto container = generator.generate<std::vector<int>>(size, min, max, value_generator);
-    // auto container = generator.generate<std::vector<std::string>>(size, min, max, value_generator);
-    // auto container = generator.generate<std::vector<UserType>>(size, min, max, value_generator);
-    // auto container = generator.generate<std::vector<std::vector<int>>>(size, min, max, value_generator); ???
+    auto rand_fl_1 = generator.generate<std::forward_list<int>>(10, {55, 69});
+    print(rand_fl_1.begin(), rand_fl_1.end(), std::cout);
 
-    // 1. api контейнера
-    // 2. определенный генератор для value_type (встроенный или пользовательский). Встроенный генератор определен параметром по умолчанию
+    // -----------------------------------------------------------------------------------------------------------------
 
+    auto rand_s_1 = generator.generate<std::set<int>>(10, {0, 9});
+    print(rand_s_1.begin(), rand_s_1.end(), std::cout);
 
-    // ----------------------------------------------------------------------------------------------------------------
+    auto rand_us_1 = generator.generate<std::unordered_set<int>>(10, {10, 19});
+    print(rand_us_1.begin(), rand_us_1.end(), std::cout);
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+    auto rand_m_1 = generator.generate<std::map<int, double>>(5, {0, 9}, {0.0, 1.0});
+    print_pair(rand_m_1.begin(), rand_m_1.end(), std::cout);
+
+    auto rand_um_1 = generator.generate<std::unordered_map<int, double>>(5, {10, 30}, {10.0, 11.0});
+    print_pair(rand_um_1.begin(), rand_um_1.end(), std::cout);
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+    gen::StringValueGenerator str_gen_1{4, 5, "abc123"};
+    auto rand_v_2 = generator.generate<std::vector<std::string>>(10, str_gen_1);
+    print(rand_v_2.begin(), rand_v_2.end(), std::cout);
+
+    gen::StringValueGenerator str_gen_2{2, 2, "ab"};
+    auto rand_s_2 = generator.generate<std::set<std::string>>(4, str_gen_2);
+    print(rand_s_2.begin(), rand_s_2.end(), std::cout);
+
+    gen::StringValueGenerator str_gen_3{3, 3, "klx"};
+    gen::StringValueGenerator str_gen_4{5, 5, "aAbBcCdDeE12345"};
+    auto rand_m_2 = generator.generate<std::map<std::string, std::string>>(5, str_gen_3, str_gen_4);
+    print_pair(rand_m_2.begin(), rand_m_2.end(), std::cout);
+
 
     return 0;
 }
