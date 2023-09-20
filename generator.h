@@ -18,8 +18,8 @@ namespace gen {
     namespace sfinae {
 
         template<typename Container>
-        constexpr auto test_push_back(typename Container::value_type) -> decltype(std::declval<Container>().push_back(
-                std::declval<typename Container::value_type>()), std::true_type{});
+        constexpr auto test_push_back(typename Container::value_type)
+            -> decltype(std::declval<Container>().push_back(std::declval<typename Container::value_type>()), std::true_type{});
 
         template<typename Container>
         constexpr auto test_push_back(...) -> std::false_type;
@@ -32,8 +32,8 @@ namespace gen {
         // -----------------------------------------------------------------------------------------------------------------
 
         template<typename Container>
-        constexpr auto test_push_front(typename Container::value_type) -> decltype(std::declval<Container>().push_front(
-                std::declval<typename Container::value_type>()), std::true_type{});
+        constexpr auto test_push_front(typename Container::value_type)
+            -> decltype(std::declval<Container>().push_front(std::declval<typename Container::value_type>()), std::true_type{});
 
         template<typename Container>
         constexpr auto test_push_front(...) -> std::false_type;
@@ -46,8 +46,8 @@ namespace gen {
         // -----------------------------------------------------------------------------------------------------------------
 
         template<typename Container>
-        constexpr auto test_insert(typename Container::value_type) -> decltype(std::declval<Container>().insert(
-                std::declval<typename Container::value_type>()), std::true_type{});
+        constexpr auto test_insert(typename Container::value_type)
+            -> decltype(std::declval<Container>().insert(std::declval<typename Container::value_type>()), std::true_type{});
 
         template<typename Container>
         constexpr auto test_insert(...) -> std::false_type;
@@ -60,8 +60,8 @@ namespace gen {
         // -----------------------------------------------------------------------------------------------------------------
 
         template<typename Container>
-        constexpr auto test_reserve(typename Container::size_type) -> decltype(std::declval<Container>().reserve(
-                std::declval<typename Container::size_type>()), std::true_type{});
+        constexpr auto test_reserve(typename Container::size_type)
+            -> decltype(std::declval<Container>().reserve(std::declval<typename Container::size_type>()), std::true_type{});
 
         template<typename Container>
         constexpr auto test_reserve(...) -> std::false_type;
@@ -74,24 +74,19 @@ namespace gen {
         // -----------------------------------------------------------------------------------------------------------------
 
         template<typename T>
-        struct is_std_seq_container : std::false_type {
-        };
+        struct is_std_seq_container : std::false_type {};
 
         template<typename T>
-        struct is_std_seq_container<std::vector<T>> : std::true_type {
-        };
+        struct is_std_seq_container<std::vector<T>> : std::true_type {};
 
         template<typename T>
-        struct is_std_seq_container<std::deque<T>> : std::true_type {
-        };
+        struct is_std_seq_container<std::deque<T>> : std::true_type {};
 
         template<typename T>
-        struct is_std_seq_container<std::list<T>> : std::true_type {
-        };
+        struct is_std_seq_container<std::list<T>> : std::true_type {};
 
         template<typename T>
-        struct is_std_seq_container<std::forward_list<T>> : std::true_type {
-        };
+        struct is_std_seq_container<std::forward_list<T>> : std::true_type {};
 
         template<typename T>
         constexpr bool is_std_seq_container_v = is_std_seq_container<T>::value;
@@ -99,16 +94,13 @@ namespace gen {
         // -----------------------------------------------------------------------------------------------------------------
 
         template<typename T>
-        struct is_std_associative_val_only_container : std::false_type {
-        };
+        struct is_std_associative_val_only_container : std::false_type {};
 
         template<typename T>
-        struct is_std_associative_val_only_container<std::set<T>> : std::true_type {
-        };
+        struct is_std_associative_val_only_container<std::set<T>> : std::true_type {};
 
         template<typename T>
-        struct is_std_associative_val_only_container<std::unordered_set<T>> : std::true_type {
-        };
+        struct is_std_associative_val_only_container<std::unordered_set<T>> : std::true_type {};
 
         template<typename T>
         constexpr bool is_std_associative_val_only_container_v = is_std_associative_val_only_container<T>::value;
@@ -116,16 +108,13 @@ namespace gen {
         // -----------------------------------------------------------------------------------------------------------------
 
         template<typename T>
-        struct is_std_associative_key_val_container : std::false_type {
-        };
+        struct is_std_associative_key_val_container : std::false_type {};
 
         template<typename T, typename U>
-        struct is_std_associative_key_val_container<std::map<T, U>> : std::true_type {
-        };
+        struct is_std_associative_key_val_container<std::map<T, U>> : std::true_type {};
 
         template<typename T, typename U>
-        struct is_std_associative_key_val_container<std::unordered_map<T, U>> : std::true_type {
-        };
+        struct is_std_associative_key_val_container<std::unordered_map<T, U>> : std::true_type {};
 
         template<typename T>
         constexpr bool is_std_associative_key_val_container_v = is_std_associative_key_val_container<T>::value;
@@ -206,7 +195,8 @@ namespace gen {
                  typename ValueGenerator = ArithmeticValueGenerator<value_type<Container>>,
                  enable_if_std_seq_container<Container>* = nullptr>
         Container generate(size_type<Container> size,
-                           ValueGenerator val_gen = {}) {
+                           ValueGenerator val_gen = {})
+        {
             Container container;
             if constexpr (sfinae::has_reserve_method<Container>()) container.reserve(size);
 
@@ -225,7 +215,8 @@ namespace gen {
                  typename ValueGenerator = ArithmeticValueGenerator<value_type<Container>>,
                  enable_if_std_actv_val_container<Container>* = nullptr>
         Container generate(size_type<Container> size,
-                           ValueGenerator val_gen = {}) {
+                           ValueGenerator val_gen = {})
+        {
             // the size of container must be more or equal to all possible unique values in range [val_gen.min, val_gen.max]
             // if this condition is false - UB or infinite cycle may happen
             // todo: add check for this condition - it will throw an exception then
@@ -248,7 +239,8 @@ namespace gen {
                  enable_if_std_actv_key_val_container<Container>* = nullptr>
         Container generate(size_type<Container> size,
                            KeyGenerator key_gen = {},
-                           ValueGenerator val_gen = {}) {
+                           ValueGenerator val_gen = {})
+        {
             // the size of container must be more or equal to all possible unique values in range [val_gen.min, val_gen.max]
             // if this condition is false - UB or infinite cycle may happen
             // todo: add check for this condition - it will throw an exception then
