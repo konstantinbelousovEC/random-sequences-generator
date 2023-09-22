@@ -1,47 +1,5 @@
 #include <iostream>
-#include <utility>
-
 #include "generator.h"
-
-class X {
-private:
-    int x_{};
-    int x_2_{};
-    double y_{};
-    std::string str_;
-
-public:
-    void print() {
-        std::cout << "|" << x_ << " : " << x_2_ << " : " << y_ << " : " << str_ << "|" << " ";
-    }
-
-    X() = default;
-    X(int x, double y, std::string str) : x_(x), x_2_(x_ * 2), y_(y), str_(std::move(str)) {}
-};
-
-namespace gen {
-
-    template<typename T, typename U>
-    struct XValueGenerator {
-    private:
-        gen::ArithmeticValueGenerator<T> x_gen_;
-        gen::ArithmeticValueGenerator<U> y_gen_;
-        gen::StringValueGenerator str_gen_;
-
-    public:
-        XValueGenerator(gen::ArithmeticValueGenerator<T> x_gen,
-                        gen::ArithmeticValueGenerator<U> y_gen,
-                        gen::StringValueGenerator str_gen)
-        : x_gen_(x_gen), y_gen_(y_gen), str_gen_(std::move(str_gen)) {}
-
-        template<typename BitGen>
-        X operator() (BitGen& gen) {
-            return X(x_gen_(gen), y_gen_(gen), str_gen_(gen));
-        }
-
-    };
-
-}
 
 int main() {
 
@@ -49,60 +7,111 @@ int main() {
 
     // -----------------------------------------------------------------------------------------------------------------
 
-    auto rand_v_1 = generator.generate<std::vector<int>>(10, {10, 24});
-    gen::print::print(rand_v_1.begin(), rand_v_1.end(), std::cout);
+    {
+        constexpr size_t v_size = 10;
+        constexpr int minimum = 0;
+        constexpr int maximum = 1024;
 
-    auto rand_d_1 = generator.generate<std::deque<int>>(10, {25, 39});
-    gen::print::print(rand_d_1.begin(), rand_d_1.end(), std::cout);
-
-    auto rand_l_1 = generator.generate<std::list<int>>(10, {40, 54});
-    gen::print::print(rand_l_1.begin(), rand_l_1.end(), std::cout);
-
-    auto rand_fl_1 = generator.generate<std::forward_list<int>>(10, {55, 69});
-    gen::print::print(rand_fl_1.begin(), rand_fl_1.end(), std::cout);
-
-    // -----------------------------------------------------------------------------------------------------------------
-
-    auto rand_s_1 = generator.generate<std::set<int>>(10, {0, 9});
-    gen::print::print(rand_s_1.begin(), rand_s_1.end(), std::cout);
-
-    auto rand_us_1 = generator.generate<std::unordered_set<int>>(10, {10, 19});
-    gen::print::print(rand_us_1.begin(), rand_us_1.end(), std::cout);
-
-    // -----------------------------------------------------------------------------------------------------------------
-
-    auto rand_m_1 = generator.generate<std::map<int, double>>(5, {0, 9}, {0.0, 1.0});
-    gen::print::print_pair(rand_m_1.begin(), rand_m_1.end(), std::cout);
-
-    auto rand_um_1 = generator.generate<std::unordered_map<int, double>>(5, {10, 30}, {10.0, 11.0});
-    gen::print::print_pair(rand_um_1.begin(), rand_um_1.end(), std::cout);
-
-    // -----------------------------------------------------------------------------------------------------------------
-
-    gen::StringValueGenerator str_gen_1{4, 5, "abc123"};
-    auto rand_v_2 = generator.generate<std::vector<std::string>>(10, str_gen_1);
-    gen::print::print(rand_v_2.begin(), rand_v_2.end(), std::cout);
-
-    gen::StringValueGenerator str_gen_2{2, 2, "ab"};
-    auto rand_s_2 = generator.generate<std::set<std::string>>(4, str_gen_2);
-    gen::print::print(rand_s_2.begin(), rand_s_2.end(), std::cout);
-
-    gen::StringValueGenerator str_gen_3{3, 3, "klx"};
-    gen::StringValueGenerator str_gen_4{5, 5, "aAbBcCdDeE12345"};
-    auto rand_m_2 = generator.generate<std::map<std::string, std::string>>(5, str_gen_3, str_gen_4);
-    gen::print::print_pair(rand_m_2.begin(), rand_m_2.end(), std::cout);
-
-    // -----------------------------------------------------------------------------------------------------------------
-
-    gen::ArithmeticValueGenerator x_gen{10, 15};
-    gen::ArithmeticValueGenerator y_gen{3.0, 5.0};
-    gen::StringValueGenerator str_gen{3, 3, "a1b2c3"};
-    gen::XValueGenerator xv_gen{x_gen, y_gen, str_gen};
-    auto rand_v_3 = generator.generate<std::vector<X>>(5, xv_gen);
-    for (auto&& elem : rand_v_3) {
-        elem.print();
+        gen::SequentialContainer auto rand_vector = generator.generate<std::vector<int>>(v_size, {minimum, maximum});
+        assert(rand_vector.size() == v_size);
+        assert(*(std::min_element(rand_vector.begin(), rand_vector.end())) >= minimum);
+        assert(*(std::max_element(rand_vector.begin(), rand_vector.end())) <= maximum);
     }
-    std::cout << std::endl;
+    {
+        constexpr size_t v_size = 10;
+        constexpr int minimum = -5000;
+        constexpr int maximum = -4000;
+
+        gen::SequentialContainer auto rand_deque = generator.generate<std::deque<int>>(v_size, {minimum, maximum});
+        assert(rand_deque.size() == v_size);
+        assert(*(std::min_element(rand_deque.begin(), rand_deque.end())) >= minimum);
+        assert(*(std::max_element(rand_deque.begin(), rand_deque.end())) <= maximum);
+    }
+    {
+        constexpr size_t v_size = 100;
+        constexpr double minimum = -0.1;
+        constexpr double maximum = 0.1;
+
+        gen::SequentialContainer auto rand_array = generator.generate<std::array<double, v_size>>({minimum, maximum});
+        assert(rand_array.size() == v_size);
+        assert(*(std::min_element(rand_array.begin(), rand_array.end())) >= minimum);
+        assert(*(std::max_element(rand_array.begin(), rand_array.end())) <= maximum);
+    }
+    {
+        constexpr size_t v_size = 10;
+        constexpr char minimum = 'A';
+        constexpr char maximum = 'Z';
+
+        gen::SequentialContainer auto rand_list = generator.generate<std::list<unsigned char>>(v_size, {minimum, maximum});
+        assert(rand_list.size() == v_size);
+        assert(*(std::min_element(rand_list.begin(), rand_list.end())) >= minimum);
+        assert(*(std::max_element(rand_list.begin(), rand_list.end())) <= maximum);
+        std::copy(rand_list.begin(), rand_list.end(), std::ostream_iterator<unsigned char>(std::cout, " "));
+    }
+    {
+        constexpr size_t v_size = 10;
+        constexpr int minimum = -100;
+        constexpr int maximum = 150;
+
+        gen::SequentialContainer auto rand_forward_list = generator.generate<std::forward_list<int>>(v_size, {minimum, maximum});
+        assert(std::count_if(rand_forward_list.begin(), rand_forward_list.end(), [](auto){return true;}) == v_size);
+        assert(*(std::min_element(rand_forward_list.begin(), rand_forward_list.end())) >= minimum);
+        assert(*(std::max_element(rand_forward_list.begin(), rand_forward_list.end())) <= maximum);
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+    {
+        constexpr size_t v_size = 10;
+        constexpr int minimum = 0;
+        constexpr int maximum = 9;
+
+        gen::SetContainer auto rand_set = generator.generate<std::set<int>>(v_size, {minimum, maximum});
+        assert(rand_set.size() == v_size);
+        assert(*(std::min_element(rand_set.begin(), rand_set.end())) >= minimum);
+        assert(*(std::max_element(rand_set.begin(), rand_set.end())) <= maximum);
+    }
+    {
+        constexpr size_t v_size = 10;
+        constexpr int minimum = -100;
+        constexpr int maximum = 150;
+
+        gen::SetContainer auto rand_unordered_set = generator.generate<std::unordered_set<int>>(v_size, {minimum, maximum});
+        assert(rand_unordered_set.size() == v_size);
+        assert(*(std::min_element(rand_unordered_set.begin(), rand_unordered_set.end())) >= minimum);
+        assert(*(std::max_element(rand_unordered_set.begin(), rand_unordered_set.end())) <= maximum);
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+    {
+        constexpr size_t v_size = 32;
+        constexpr int minimum_key = -100;
+        constexpr int maximum_key = 150;
+        constexpr float minimum_value = 10.0;
+        constexpr float maximum_value = 11.0;
+
+        gen::MapContainer auto rand_map = generator.generate<std::map<int, float>>(v_size, {minimum_key, maximum_key}, {minimum_value, maximum_value});
+        assert(rand_map.size() == v_size);
+        assert(std::min_element(rand_map.begin(), rand_map.end())->first >= minimum_key);
+        assert(std::min_element(rand_map.begin(), rand_map.end())->second >= minimum_value);
+        assert(std::max_element(rand_map.begin(), rand_map.end())->first <= maximum_key);
+        assert(std::max_element(rand_map.begin(), rand_map.end())->second <= maximum_value);
+    }
+    {
+        constexpr size_t v_size = 32;
+        constexpr int minimum_key = -100;
+        constexpr int maximum_key = 150;
+        constexpr float minimum_value = 10.0;
+        constexpr float maximum_value = 11.0;
+
+        gen::MapContainer auto rand_unordered_map = generator.generate<std::unordered_map<int, float>>(v_size, {minimum_key, maximum_key}, {minimum_value, maximum_value});
+        assert(rand_unordered_map.size() == v_size);
+        assert(std::min_element(rand_unordered_map.begin(), rand_unordered_map.end())->first >= minimum_key);
+        assert(std::min_element(rand_unordered_map.begin(), rand_unordered_map.end())->second >= minimum_value);
+        assert(std::max_element(rand_unordered_map.begin(), rand_unordered_map.end())->first <= maximum_key);
+        assert(std::max_element(rand_unordered_map.begin(), rand_unordered_map.end())->second <= maximum_value);
+    }
 
     // -----------------------------------------------------------------------------------------------------------------
 
