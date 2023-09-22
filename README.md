@@ -2,14 +2,13 @@
 
 lib of generation sequences (stl containers) of scalar or user-provided types
 
-this is the first draft version of lib - **full documentation will be written later**
-
 now it supports:
 
 sequenced containers:
 
 - std::vector
 - std::deque
+- std::array
 - std::list
 - std::forward_list
 
@@ -31,4 +30,4 @@ examples of using you can see in main.cpp file
 ## TODO
 
 - opportunity to generate strings according to regular expressions
-- serrialization generated data to files
+- more built-in generators for frequently used structures

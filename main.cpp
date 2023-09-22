@@ -1,4 +1,13 @@
-#include <iostream>
+#include <vector>
+#include <deque>
+#include <array>
+#include <list>
+#include <forward_list>
+#include <unordered_map>
+#include <unordered_set>
+#include <map>
+#include <set>
+
 #include "generator.h"
 
 int main() {
@@ -46,7 +55,6 @@ int main() {
         assert(rand_list.size() == v_size);
         assert(*(std::min_element(rand_list.begin(), rand_list.end())) >= minimum);
         assert(*(std::max_element(rand_list.begin(), rand_list.end())) <= maximum);
-        std::copy(rand_list.begin(), rand_list.end(), std::ostream_iterator<unsigned char>(std::cout, " "));
     }
     {
         constexpr size_t v_size = 10;

@@ -1,22 +1,13 @@
 #pragma once
 
 #include <random>
-#include <functional>
-#include <type_traits>
-
-#include <vector>
-#include <deque>
-#include <list>
-#include <forward_list>
-#include <unordered_map>
-#include <unordered_set>
-#include <map>
-#include <set>
 
 namespace gen {
 
     // -----------------------------------------------------------------------------------------------------------------
+    // concepts for Generator's generate method overloading
 
+    // sequenced containers: vector, deque, list, forward_list
     template <typename Container>
     concept SequentialContainer = requires(Container cont) {
         typename Container::value_type;
@@ -25,6 +16,7 @@ namespace gen {
         };
     };
 
+    // static array
     template <typename Container>
     concept StaticArray = requires(Container cont) {
         requires !requires {
@@ -32,16 +24,17 @@ namespace gen {
         };
     };
 
+    // associative containers with key-value pairs: map, unordered_map
     template <typename Container>
     concept MapContainer = requires(Container cont) {
         typename Container::key_type;
         typename Container::mapped_type;
     };
 
+    // key-only associative containers: set, unordered_set
     template <typename Container>
     concept SetContainer = requires(Container cont) {
         typename Container::key_type;
-        typename Container::value_type;
         requires !requires {
             typename Container::mapped_type;
         };
