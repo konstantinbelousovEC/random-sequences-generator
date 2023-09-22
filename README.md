@@ -31,3 +31,7 @@ examples of using you can see in main.cpp file
 
 - opportunity to generate strings according to regular expressions
 - more built-in generators for frequently used structures
+- write compile-time random number engine:
+  - linear congruential engine
+  - subtract with carry engine
+  - Mersenne twister engine
