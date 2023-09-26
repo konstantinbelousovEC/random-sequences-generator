@@ -7,6 +7,8 @@
 #include <unordered_set>
 #include <map>
 #include <set>
+#include <algorithm>
+#include <cassert>
 
 #include "generator.h"
 
@@ -28,6 +30,16 @@ int main() {
     }
     {
         constexpr size_t v_size = 10;
+        constexpr unsigned char minimum = 65;
+        constexpr unsigned char maximum = 126;
+
+        gen::SequentialContainer auto rand_char_vector = generator.generate<std::vector<unsigned char >>(v_size, {minimum, maximum});
+        assert(rand_char_vector.size() == v_size);
+        assert(*(std::min_element(rand_char_vector.begin(), rand_char_vector.end())) >= minimum);
+        assert(*(std::max_element(rand_char_vector.begin(), rand_char_vector.end())) <= maximum);
+    }
+    {
+        constexpr size_t v_size = 10;
         constexpr int minimum = -5000;
         constexpr int maximum = -4000;
 
@@ -41,7 +53,7 @@ int main() {
         constexpr double minimum = -0.1;
         constexpr double maximum = 0.1;
 
-        gen::SequentialContainer auto rand_array = generator.generate<std::array<double, v_size>>({minimum, maximum});
+        gen::StaticArray auto rand_array = generator.generate<std::array<double, v_size>>({minimum, maximum});
         assert(rand_array.size() == v_size);
         assert(*(std::min_element(rand_array.begin(), rand_array.end())) >= minimum);
         assert(*(std::max_element(rand_array.begin(), rand_array.end())) <= maximum);
@@ -125,4 +137,3 @@ int main() {
 
     return 0;
 }
-

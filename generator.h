@@ -1,6 +1,7 @@
 #pragma once
 
 #include <random>
+#include <stdexcept>
 
 namespace gen {
 
@@ -44,16 +45,37 @@ namespace gen {
 
     namespace generators {
 
+        template <typename T>
+        struct DistributionType;
+
+        template <typename T>
+        requires std::is_integral_v<T>
+        struct DistributionType<T> {
+            using type = std::uniform_int_distribution<T>;
+        };
+
+        template <typename T>
+        requires std::is_floating_point_v<T>
+        struct DistributionType<T> {
+            using type = std::uniform_real_distribution<T>;
+        };
+
+        template<typename T>
+        using Distribution = typename DistributionType<T>::type;
+
         template<typename T> requires std::is_arithmetic_v<T>
         struct ArithmeticValueGenerator final {
          private:
             T min_ = std::numeric_limits<T>::min();
             T max_ = std::numeric_limits<T>::max();
+            Distribution<T> distribution_{min_, max_};
 
          public:
             ArithmeticValueGenerator() = default;
 
-            ArithmeticValueGenerator(T min, T max) : min_(min), max_(max) {
+            ArithmeticValueGenerator(T min, T max)
+            : min_(min), max_(max), distribution_(min_, max_)
+            {
                 if (max_ < min_) std::swap(max_, min_);
             }
 
@@ -63,11 +85,7 @@ namespace gen {
 
             template<typename BitGen>
             T operator()(BitGen& gen) {
-                if constexpr (std::is_integral_v<T>) {
-                    return std::uniform_int_distribution<T>{min_, max_}(gen);
-                } else {
-                    return std::uniform_real_distribution<T>{min_, max_}(gen);
-                }
+                return distribution_(gen);
             }
 
         };  // struct ArithmeticValueGenerator
@@ -117,7 +135,7 @@ namespace gen {
         template<SequentialContainer Container,
                  typename size_type = typename Container::size_type,
                  typename ValueGenerator = generators::ArithmeticValueGenerator<typename Container::value_type>>
-        Container generate(size_type size, ValueGenerator val_gen = {})
+        Container generate(size_type size, ValueGenerator val_gen)
         {
             Container container(size);
             std::generate(container.begin(), container.end(), [&]() { return val_gen(gen_); });
@@ -126,7 +144,7 @@ namespace gen {
 
         template<StaticArray Container,
                  typename ValueGenerator = generators::ArithmeticValueGenerator<typename Container::value_type>>
-        Container generate(ValueGenerator val_gen = {})
+        Container generate(ValueGenerator val_gen)
         {
             Container container;
             std::generate(container.begin(), container.end(), [&]() { return val_gen(gen_); });
@@ -137,7 +155,7 @@ namespace gen {
         template<SetContainer Container,
                  typename size_type = typename Container::size_type,
                  typename ValueGenerator = generators::ArithmeticValueGenerator<typename Container::value_type>>
-        Container generate(size_type size, ValueGenerator key_gen = {})
+        Container generate(size_type size, ValueGenerator key_gen)
         {
             if constexpr (std::is_integral_v<typename Container::value_type>) {
                 if (static_cast<size_type>(key_gen.get_value_range()) < size - 1)
@@ -160,7 +178,7 @@ namespace gen {
                  typename size_type = typename Container::size_type,
                  typename KeyGenerator = generators::ArithmeticValueGenerator<typename Container::key_type>,
                  typename ValueGenerator = generators::ArithmeticValueGenerator<typename Container::mapped_type>>
-        Container generate(size_type size, KeyGenerator key_gen = {}, ValueGenerator val_gen = {})
+        Container generate(size_type size, KeyGenerator key_gen, ValueGenerator val_gen)
         {
             if constexpr (std::is_integral_v<typename Container::key_type>) {
                 if (static_cast<size_type>(key_gen.get_value_range()) < size - 1)
