@@ -75,13 +75,12 @@ namespace gen {
             ArithmeticValueGenerator() = default;
 
             ArithmeticValueGenerator(T min, T max)
-            : min_(min), max_(max), distribution_(min_, max_)
-            {
-                if (max_ < min_) std::swap(max_, min_);
-            }
+            : min_(min < max ? min : max),
+              max_(min < max ? max : min),
+              distribution_(min_, max_) {}
 
             [[nodiscard]] size_t get_value_range() const noexcept {
-                return static_cast<T>(std::abs(max_ - min_));
+                return std::abs(max_ - min_);
             }
 
             template<typename BitGen>
@@ -104,8 +103,8 @@ namespace gen {
 
          public:
             StringValueGenerator(str_sz min_size, str_sz max_size, std::string char_collection)
-                    : min_sz_(min_size),
-                      max_sz_(max_size),
+                    : min_sz_(min_size < max_size ? min_size : max_size),
+                      max_sz_(min_size < max_size ? max_size : min_size),
                       char_collection_(std::move(char_collection)),
                       char_dist_(0, char_collection_.size() - 1),
                       str_size_dist_(min_sz_, max_sz_) {}
