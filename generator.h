@@ -174,7 +174,7 @@ namespace gen {
                  typename ValueGenerator = generators::ArithmeticValueGenerator<typename Container::value_type>>
         Container generate(size_type size, ValueGenerator key_gen)
         {
-            if constexpr (std::is_integral_v<typename Container::value_type>) {
+            if constexpr (!std::is_floating_point_v<typename Container::key_type>) {
                 if (static_cast<size_type>(key_gen.get_value_range()) < size - 1)
                     throw std::range_error("Range of random values less than size of unique key's container");
             }
@@ -197,7 +197,7 @@ namespace gen {
                  typename ValueGenerator = generators::ArithmeticValueGenerator<typename Container::mapped_type>>
         Container generate(size_type size, KeyGenerator key_gen, ValueGenerator val_gen)
         {
-            if constexpr (std::is_integral_v<typename Container::key_type>) {
+            if constexpr (!std::is_floating_point_v<typename Container::key_type>) {
                 if (static_cast<size_type>(key_gen.get_value_range()) < size - 1)
                     throw std::range_error("Range of random values less than size of unique key's container");
             }
