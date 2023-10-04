@@ -1,3 +1,6 @@
+// @copyright Copyright (c) 2023. Created by Konstantin Belousov.
+// All rights reserved.
+
 #include <vector>
 #include <deque>
 #include <array>
@@ -11,8 +14,8 @@
 #include <cassert>
 #include <iostream>
 #include <regex>
-
 #include "generator.h"
+#include "value-generators.h"
 
 int main() {
 
@@ -162,7 +165,7 @@ int main() {
 
     {
         constexpr size_t v_size = 10;
-        gen::generators::StringValueGenerator str_gen{5, 10, "abcde"};
+        gen::val_generators::StringValueGenerator str_gen{5, 10, "abcde"};
 
         gen::SequentialContainer auto rand_vector =
                 generator.generate<std::vector<std::string>>(v_size, str_gen);
@@ -177,7 +180,7 @@ int main() {
 
     {
         constexpr size_t v_size = 10;
-        gen::generators::StringValueGenerator str_gen{5, 10, "abc12"};
+        gen::val_generators::StringValueGenerator str_gen{5, 10, "abc12"};
 
         gen::MapContainer auto rand_map =
                 generator.generate<std::map<std::string, std::string>>(v_size, str_gen, str_gen);

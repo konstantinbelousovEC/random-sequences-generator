@@ -1,3 +1,6 @@
+// @copyright Copyright (c) 2023. Created by Konstantin Belousov.
+// All rights reserved.
+
 #pragma once
 
 #include <random>
@@ -31,6 +34,7 @@ namespace gen {
     concept MapContainer = requires(Container cont) {
         typename Container::key_type;
         typename Container::mapped_type;
+        cont.insert({typename Container::key_type{}, typename Container::mapped_type{}});
     };
 
     // key-only associative containers: set, unordered_set
@@ -40,11 +44,12 @@ namespace gen {
         requires !requires {
             typename Container::mapped_type;
         };
+        cont.insert(typename Container::key_type{});
     };
 
     // -----------------------------------------------------------------------------------------------------------------
 
-    namespace generators {
+    namespace val_generators {
 
         template <typename T>
         struct DistributionType;
@@ -90,68 +95,20 @@ namespace gen {
 
         };  // struct ArithmeticValueGenerator
 
-        struct StringValueGenerator final {
-         private:
-            using str_sz = std::string::size_type;
+    }  // namespace val_generators
 
-         private:
-            str_sz min_sz_;
-            str_sz max_sz_;
-            std::string char_collection_;
-            std::uniform_int_distribution<str_sz> char_dist_;
-            std::uniform_int_distribution<str_sz> str_size_dist_;
-
-         public:
-            StringValueGenerator(str_sz min_size, str_sz max_size, std::string char_collection)
-                    : min_sz_(min_size < max_size ? min_size : max_size),
-                      max_sz_(min_size < max_size ? max_size : min_size),
-                      char_collection_(std::move(char_collection)),
-                      char_dist_(0, char_collection_.size() - 1),
-                      str_size_dist_(min_sz_, max_sz_) {}
-
-            [[nodiscard]] size_t get_value_range() const noexcept {
-                size_t collection_size = char_collection_.size();
-                
-                size_t amount_of_possible_strings = 0;
-                size_t max_value = std::numeric_limits<size_t>::max();
-                
-                for (size_t i = min_sz_; i <= max_sz_; i++) {
-                    if (amount_of_possible_strings > max_value / collection_size) return max_value;
-                    amount_of_possible_strings += static_cast<size_t>(std::pow(collection_size, i));
-                }
-
-                return amount_of_possible_strings;
-            }
-
-            template<typename BitGen>
-            std::string operator()(BitGen& gen) {
-                str_sz str_size = str_size_dist_(gen);
-
-                std::string rand_str;
-                rand_str.reserve(str_size);
-
-                for (str_sz i = 0; i < str_size; ++i) {
-                    rand_str += char_collection_[char_dist_(gen)];
-                }
-
-                return rand_str;
-            }
-
-        };  // struct StringValueGenerator
-
-    }  // namespace generators
-
+    template<typename RandDevice = std::random_device, typename Engine = std::mt19937>
     class Generator final {
      private:
-        std::random_device rd_;
-        std::mt19937 gen_;
+        RandDevice rd_;
+        Engine gen_;
 
      public:
         Generator() : rd_(), gen_(rd_()) {}
 
         template<SequentialContainer Container,
                  typename size_type = typename Container::size_type,
-                 typename ValueGenerator = generators::ArithmeticValueGenerator<typename Container::value_type>>
+                 typename ValueGenerator = val_generators::ArithmeticValueGenerator<typename Container::value_type>>
         Container generate(size_type size, ValueGenerator val_gen)
         {
             Container container(size);
@@ -160,7 +117,7 @@ namespace gen {
         }
 
         template<StaticArray Container,
-                 typename ValueGenerator = generators::ArithmeticValueGenerator<typename Container::value_type>>
+                 typename ValueGenerator = val_generators::ArithmeticValueGenerator<typename Container::value_type>>
         Container generate(ValueGenerator val_gen)
         {
             Container container;
@@ -171,7 +128,7 @@ namespace gen {
 
         template<SetContainer Container,
                  typename size_type = typename Container::size_type,
-                 typename ValueGenerator = generators::ArithmeticValueGenerator<typename Container::value_type>>
+                 typename ValueGenerator = val_generators::ArithmeticValueGenerator<typename Container::value_type>>
         Container generate(size_type size, ValueGenerator key_gen)
         {
             if constexpr (!std::is_floating_point_v<typename Container::key_type>) {
@@ -193,8 +150,8 @@ namespace gen {
 
         template<MapContainer Container,
                  typename size_type = typename Container::size_type,
-                 typename KeyGenerator = generators::ArithmeticValueGenerator<typename Container::key_type>,
-                 typename ValueGenerator = generators::ArithmeticValueGenerator<typename Container::mapped_type>>
+                 typename KeyGenerator = val_generators::ArithmeticValueGenerator<typename Container::key_type>,
+                 typename ValueGenerator = val_generators::ArithmeticValueGenerator<typename Container::mapped_type>>
         Container generate(size_type size, KeyGenerator key_gen, ValueGenerator val_gen)
         {
             if constexpr (!std::is_floating_point_v<typename Container::key_type>) {
