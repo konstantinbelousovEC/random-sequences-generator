@@ -12,39 +12,45 @@ namespace gen {
     // -----------------------------------------------------------------------------------------------------------------
     // concepts for Generator's generate method overloading
 
+    template <typename Container>
+    concept HasKeyType = requires { typename Container::key_type; };
+
+    template <typename Container>
+    concept HasValueType = requires { typename Container::value_type; };
+
+    template <typename Container>
+    concept HasMappedType = requires { typename Container::mapped_type; };
+
+    template <typename Container>
+    concept HasAllocator = requires { typename Container::allocator_type; };
+
     // sequenced containers: vector, deque, list, forward_list
     template <typename Container>
-    concept SequentialContainer = requires(Container cont) {
-        typename Container::value_type;
-        requires !requires {
-            typename Container::key_type;
-        };
+    concept SequentialContainer = requires {
+        requires HasValueType<Container>;
+        requires !HasKeyType<Container>;
     };
 
     // static array
     template <typename Container>
-    concept StaticArray = requires(Container cont) {
-        requires !requires {
-            typename Container::allocator_type;
-        };
+    concept StaticArray = requires {
+        requires !HasAllocator<Container>;
     };
 
     // associative containers with key-value pairs: map, unordered_map
     template <typename Container>
-    concept MapContainer = requires(Container cont) {
-        typename Container::key_type;
-        typename Container::mapped_type;
-        cont.insert({typename Container::key_type{}, typename Container::mapped_type{}});
+    concept MapContainer = requires(Container container) {
+        requires HasKeyType<Container>;
+        requires HasMappedType<Container>;
+        container.insert({typename Container::key_type{}, typename Container::mapped_type{}});
     };
 
     // key-only associative containers: set, unordered_set
     template <typename Container>
-    concept SetContainer = requires(Container cont) {
-        typename Container::key_type;
-        requires !requires {
-            typename Container::mapped_type;
-        };
-        cont.insert(typename Container::key_type{});
+    concept SetContainer = requires(Container container) {
+        requires HasKeyType<Container>;
+        requires !HasMappedType<Container>;
+        container.insert(typename Container::key_type{});
     };
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -54,14 +60,12 @@ namespace gen {
         template <typename T>
         struct DistributionType;
 
-        template <typename T>
-        requires std::is_integral_v<T>
+        template <typename T> requires std::is_integral_v<T>
         struct DistributionType<T> {
             using type = std::uniform_int_distribution<T>;
         };
 
-        template <typename T>
-        requires std::is_floating_point_v<T>
+        template <typename T> requires std::is_floating_point_v<T>
         struct DistributionType<T> {
             using type = std::uniform_real_distribution<T>;
         };
@@ -84,7 +88,7 @@ namespace gen {
               max_(min < max ? max : min),
               distribution_(min_, max_) {}
 
-            [[nodiscard]] size_t get_value_range() const noexcept {
+            [[nodiscard]] size_t get_value_range() const {
                 return std::abs(max_ - min_);
             }
 

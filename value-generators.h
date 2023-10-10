@@ -23,7 +23,7 @@ namespace gen::val_generators {
      public:
         StringValueGenerator(str_sz min_size, str_sz max_size, std::string char_collection);
 
-        [[nodiscard]] size_t get_value_range() const noexcept;
+        [[nodiscard]] size_t get_value_range() const;
 
         template<typename BitGen>
         std::string operator()(BitGen& gen);

@@ -14,7 +14,7 @@ namespace gen::val_generators {
           char_dist_(0, char_collection_.size() - 1),
           str_size_dist_(min_sz_, max_sz_) {}
 
-    size_t StringValueGenerator::get_value_range() const noexcept {
+    size_t StringValueGenerator::get_value_range() const {
         size_t collection_size = char_collection_.size();
 
         size_t amount_of_possible_strings = 0;
@@ -27,6 +27,5 @@ namespace gen::val_generators {
 
         return amount_of_possible_strings;
     }
-
 
 }  // namespace gen::val_generators
