@@ -3,7 +3,7 @@
 
 #include "value-generators.h"
 
-namespace gen::val_generators {
+namespace gen::val_gens {
 
     StringValueGenerator::StringValueGenerator(StringValueGenerator::str_sz min_size,
                                                StringValueGenerator::str_sz max_size,
@@ -28,4 +28,4 @@ namespace gen::val_generators {
         return amount_of_possible_strings;
     }
 
-}  // namespace gen::val_generators
+}  // namespace gen::val_gens

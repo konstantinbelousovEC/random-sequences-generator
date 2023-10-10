@@ -12,6 +12,9 @@ namespace gen {
     // -----------------------------------------------------------------------------------------------------------------
     // concepts for Generator's generate method overloading
 
+    template <typename T>
+    concept arithmetic_v = std::is_arithmetic_v<T>;
+
     template <typename Container>
     concept HasKeyType = requires { typename Container::key_type; };
 
@@ -53,19 +56,36 @@ namespace gen {
         container.insert(typename Container::key_type{});
     };
 
+    template <typename ValGen, typename BitGen>
+    concept ValueGen = requires(ValGen gen, BitGen bit_gen) {
+        typename ValGen::return_type;
+        { gen.operator()(bit_gen) } -> std::same_as<typename ValGen::return_type>;
+    };
+
+    template <typename ValGen, typename BitGen>
+    concept ValueGenRange = requires(ValGen gen) {
+        requires ValueGen<ValGen, BitGen>;
+        { gen.get_value_range() } -> std::convertible_to<size_t>;
+    };
+
+    template <typename Container>
+    concept IsFloatingPointKeyType = requires {
+        std::is_floating_point_v<typename Container::key_type>;
+    };
+
     // -----------------------------------------------------------------------------------------------------------------
 
-    namespace val_generators {
+    namespace val_gens {
 
         template <typename T>
         struct DistributionType;
 
-        template <typename T> requires std::is_integral_v<T>
+        template <std::integral T>
         struct DistributionType<T> {
             using type = std::uniform_int_distribution<T>;
         };
 
-        template <typename T> requires std::is_floating_point_v<T>
+        template <std::floating_point T>
         struct DistributionType<T> {
             using type = std::uniform_real_distribution<T>;
         };
@@ -73,8 +93,11 @@ namespace gen {
         template<typename T>
         using Distribution_t = typename DistributionType<T>::type;
 
-        template<typename T> requires std::is_arithmetic_v<T>
-        struct ArithmeticValueGenerator final {
+        template<arithmetic_v T>
+        class ArithmeticValueGenerator final {
+         public:
+            using return_type = T;
+
          private:
             T min_ = std::numeric_limits<T>::min();
             T max_ = std::numeric_limits<T>::max();
@@ -97,9 +120,9 @@ namespace gen {
                 return distribution_(gen);
             }
 
-        };  // struct ArithmeticValueGenerator
+        };  // class ArithmeticValueGenerator
 
-    }  // namespace val_generators
+    }  // namespace val_gens
 
     template<typename RandDevice = std::random_device, typename Engine = std::mt19937>
     class Generator final {
@@ -111,9 +134,9 @@ namespace gen {
         Generator() : rd_(), gen_(rd_()) {}
 
         template<SequentialContainer Container,
-                 typename size_type = typename Container::size_type,
-                 typename ValueGenerator = val_generators::ArithmeticValueGenerator<typename Container::value_type>>
-        Container generate(size_type size, ValueGenerator val_gen)
+                 typename ValueGenerator = val_gens::ArithmeticValueGenerator<typename Container::value_type>>
+        requires ValueGen<ValueGenerator, Engine>
+        Container generate(size_t size, ValueGenerator val_gen)
         {
             Container container(size);
             std::generate(container.begin(), container.end(), [&]() { return val_gen(gen_); });
@@ -121,7 +144,8 @@ namespace gen {
         }
 
         template<StaticArray Container,
-                 typename ValueGenerator = val_generators::ArithmeticValueGenerator<typename Container::value_type>>
+                 typename ValueGenerator = val_gens::ArithmeticValueGenerator<typename Container::value_type>>
+        requires ValueGen<ValueGenerator, Engine>
         Container generate(ValueGenerator val_gen)
         {
             Container container;
@@ -131,18 +155,17 @@ namespace gen {
 
 
         template<SetContainer Container,
-                 typename size_type = typename Container::size_type,
-                 typename ValueGenerator = val_generators::ArithmeticValueGenerator<typename Container::value_type>>
-        Container generate(size_type size, ValueGenerator key_gen)
+                 typename ValueGenerator = val_gens::ArithmeticValueGenerator<typename Container::value_type>>
+        requires ValueGenRange<ValueGenerator, Engine>
+        Container generate(size_t size, ValueGenerator key_gen)
         {
-            if constexpr (!std::is_floating_point_v<typename Container::key_type>) {
-                if (static_cast<size_type>(key_gen.get_value_range()) < size - 1)
+            if constexpr (!IsFloatingPointKeyType<Container>) {
+                if (static_cast<size_t>(key_gen.get_value_range()) < size - 1)
                     throw std::range_error("Range of random values less than size of unique key's container");
             }
 
             Container container;
-
-            for (size_type i = 0; i < size; ++i) {
+            for (size_t i = 0; i < size; ++i) {
                 auto insert_info = container.insert(key_gen(gen_));
                 while (!insert_info.second) {
                     insert_info = container.insert(key_gen(gen_));
@@ -153,19 +176,19 @@ namespace gen {
         }
 
         template<MapContainer Container,
-                 typename size_type = typename Container::size_type,
-                 typename KeyGenerator = val_generators::ArithmeticValueGenerator<typename Container::key_type>,
-                 typename ValueGenerator = val_generators::ArithmeticValueGenerator<typename Container::mapped_type>>
-        Container generate(size_type size, KeyGenerator key_gen, ValueGenerator val_gen)
+                 typename KeyGenerator = val_gens::ArithmeticValueGenerator<typename Container::key_type>,
+                 typename ValueGenerator = val_gens::ArithmeticValueGenerator<typename Container::mapped_type>>
+        requires ValueGenRange<KeyGenerator, Engine> && ValueGenRange<ValueGenerator, Engine>
+        Container generate(size_t size, KeyGenerator key_gen, ValueGenerator val_gen)
         {
-            if constexpr (!std::is_floating_point_v<typename Container::key_type>) {
-                if (static_cast<size_type>(key_gen.get_value_range()) < size - 1)
+            if constexpr (!IsFloatingPointKeyType<Container>) {
+                if (static_cast<size_t>(key_gen.get_value_range()) < size - 1)
                     throw std::range_error("Range of random values less than size of unique key's container");
             }
 
             Container container;
 
-            for (size_type i = 0; i < size; ++i) {
+            for (size_t i = 0; i < size; ++i) {
                 auto insert_info = container.insert({key_gen(gen_), val_gen(gen_)});
                 while (!insert_info.second) {
                     insert_info = container.insert({key_gen(gen_), val_gen(gen_)});

@@ -7,11 +7,12 @@
 #include <stdexcept>
 #include <string>
 
-namespace gen::val_generators {
+namespace gen::val_gens {
 
-    struct StringValueGenerator final {
-     private:
+    class StringValueGenerator final {
+     public:
         using str_sz = std::string::size_type;
+        using return_type = std::string;
 
      private:
         str_sz min_sz_;
@@ -28,7 +29,7 @@ namespace gen::val_generators {
         template<typename BitGen>
         std::string operator()(BitGen& gen);
 
-    };  // struct StringValueGenerator
+    };  // class StringValueGenerator
 
     template<typename BitGen>
     std::string StringValueGenerator::operator()(BitGen& gen) {
@@ -44,4 +45,4 @@ namespace gen::val_generators {
         return rand_str;
     }
 
-}  // namespace gen::val_generators
+}  // namespace gen::val_gens

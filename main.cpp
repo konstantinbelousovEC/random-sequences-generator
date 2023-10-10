@@ -41,7 +41,7 @@ int main() {
         constexpr unsigned char maximum = 126;
 
         gen::SequentialContainer auto rand_char_vector =
-                generator.generate<std::vector<unsigned char >>(v_size, {minimum, maximum});
+                generator.generate<std::vector<unsigned char>>(v_size, {minimum, maximum});
 
         assert(rand_char_vector.size() == v_size);
         assert(*(std::min_element(rand_char_vector.cbegin(), rand_char_vector.cend())) >= minimum);
@@ -165,7 +165,7 @@ int main() {
 
     {
         constexpr size_t v_size = 10;
-        gen::val_generators::StringValueGenerator str_gen{5, 10, "abcde"};
+        gen::val_gens::StringValueGenerator str_gen{5, 10, "abcde"};
 
         gen::SequentialContainer auto rand_vector =
                 generator.generate<std::vector<std::string>>(v_size, str_gen);
@@ -180,7 +180,7 @@ int main() {
 
     {
         constexpr size_t v_size = 10;
-        gen::val_generators::StringValueGenerator str_gen{5, 10, "abc12"};
+        gen::val_gens::StringValueGenerator str_gen{5, 10, "abc12"};
 
         gen::MapContainer auto rand_map =
                 generator.generate<std::map<std::string, std::string>>(v_size, str_gen, str_gen);
